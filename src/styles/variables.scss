@@ -2,3 +2,8 @@
 $menuBg:#304156;
 $subMenuBg:#1f2d3d;
 $menuHover:#001528;
+
+//element
+$--font-path: '~element-ui/lib/theme-chalk/fonts';
+
+@import "~element-ui/packages/theme-chalk/src/index";

@@ -1,12 +1,13 @@
 import request from '@/utils/request'
+import config from '@/config'
 
 export function login(username, password) {
   return request({
-    url: '/user/login',
+    url: config.newegg_login,
     method: 'post',
     data: {
-      username,
-      password
+      user: username,
+      password: password
     }
   })
 }

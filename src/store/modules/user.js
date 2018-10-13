@@ -1,27 +1,35 @@
-import { login, logout, getInfo } from '@/api/login'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import {login, logout, getInfo} from '@/api/login'
+import {storage} from '@/utils/storage'
 
 const user = {
   state: {
-    token: getToken(),
-    name: '',
+    info: {},
     avatar: '',
+    email: '',
+    name: '',
+    fname: '',
     roles: []
   },
 
   mutations: {
-    SET_TOKEN: (state, token) => {
-      state.token = token
-    },
-    SET_NAME: (state, name) => {
-      state.name = name
+    SET_INFO: (state, info) => {
+      state.info = info
     },
     SET_AVATAR: (state, avatar) => {
       state.avatar = avatar
     },
+    SET_EMAIL: (state, email) => {
+      state.email = email
+    },
+    SET_NAME: (state, name) => {
+      state.name = name
+    },
+    SET_FNAME: (state, fname) => {
+      state.fname = fname
+    },
     SET_ROLES: (state, roles) => {
       state.roles = roles
-    }
+    },
   },
 
   actions: {
@@ -30,57 +38,34 @@ const user = {
       const username = userInfo.username.trim()
       return new Promise((resolve, reject) => {
         login(username, userInfo.password).then(response => {
-          const data = response.data
-          setToken(data.token)
-          commit('SET_TOKEN', data.token)
+          const data = response
+          storage.set('_genesis_admin_portal_user', data)
           resolve()
         }).catch(error => {
           reject(error)
         })
       })
     },
-
-    // 获取用户信息
-    GetInfo({ commit, state }) {
+    GetUserInfo({ commit, state }) {
       return new Promise((resolve, reject) => {
-        getInfo(state.token).then(response => {
-          const data = response.data
-          if (data.roles && data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
-            commit('SET_ROLES', data.roles)
-          } else {
-            reject('getInfo: roles must be a non-null array !')
-          }
-          commit('SET_NAME', data.name)
-          commit('SET_AVATAR', data.avatar)
-          resolve(response)
-        }).catch(error => {
-          reject(error)
-        })
+        let user = storage.get('_genesis_admin_portal_user')
+        // 使用权限验证,userinfo 需要包含 roles (roles must be a array! such as: ['editor','develop'])
+        user['roles'] = ['admin']
+        commit('SET_INFO', user)
+        commit('SET_AVATAR', user.avatar)
+        commit('SET_EMAIL', user.email)
+        commit('SET_NAME', user.user)
+        commit('SET_FNAME', user.fullname)
+        commit('SET_ROLES', user.roles)
+        resolve(user)
       })
     },
 
     // 登出
     LogOut({ commit, state }) {
-      return new Promise((resolve, reject) => {
-        logout(state.token).then(() => {
-          commit('SET_TOKEN', '')
-          commit('SET_ROLES', [])
-          removeToken()
-          resolve()
-        }).catch(error => {
-          reject(error)
-        })
-      })
+      commit('SET_INFO', {})
+      storage.delete('_genesis_admin_portal_user')
     },
-
-    // 前端 登出
-    FedLogOut({ commit }) {
-      return new Promise(resolve => {
-        commit('SET_TOKEN', '')
-        removeToken()
-        resolve()
-      })
-    }
   }
 }
 
